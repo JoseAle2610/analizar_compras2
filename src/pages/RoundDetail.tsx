@@ -140,12 +140,14 @@ export const RoundDetail: React.FC = () => {
   const handleCreateNewProduct = () => {
     if (newProductName.trim()) {
       addProduct(newProductName.trim(), []);
-      const newProduct = products.find((p) => p.name === newProductName.trim());
+      const state = useStore.getState();
+      const newProduct = state.products.find((p) => p.name === newProductName.trim());
       if (newProduct) {
         addProductToRound(round.id, newProduct.id);
       }
       setNewProductName('');
       setShowNewProduct(false);
+      setShowProductSelect(false);
     }
   };
 
@@ -180,11 +182,21 @@ export const RoundDetail: React.FC = () => {
                 <Button
                   variant="secondary"
                   size="sm"
-                  onClick={() => setShowProductSelect(!showProductSelect)}
+                  onClick={() => {
+                    if (showProductSelect) {
+                      setShowProductSelect(false);
+                    } else if (showNewProduct) {
+                      setShowNewProduct(false);
+                    } else if (availableProductsToAdd.length > 0) {
+                      setShowProductSelect(true);
+                    } else {
+                      setShowNewProduct(true);
+                    }
+                  }}
                 >
-                  {showProductSelect ? 'Cerrar' : 'Agregar'}
+                  {showProductSelect || showNewProduct ? 'Cerrar' : 'Agregar'}
                 </Button>
-                {availableProductsToAdd.length === 0 && !showNewProduct && (
+                {!showNewProduct && availableProductsToAdd.length === 0 && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -201,7 +213,10 @@ export const RoundDetail: React.FC = () => {
                 {availableProductsToAdd.map((product) => (
                   <button
                     key={product.id}
-                    onClick={() => handleAddExistingProduct(product.id)}
+                    onClick={() => {
+                      handleAddExistingProduct(product.id);
+                      setShowProductSelect(false);
+                    }}
                     className="w-full text-left px-2 py-1.5 text-sm hover:bg-emerald-50 rounded flex items-center justify-between"
                   >
                     <span className="truncate">{product.name}</span>
@@ -222,11 +237,17 @@ export const RoundDetail: React.FC = () => {
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') handleCreateNewProduct();
-                    if (e.key === 'Escape') setShowNewProduct(false);
+                    if (e.key === 'Escape') {
+                      setShowNewProduct(false);
+                      setNewProductName('');
+                    }
                   }}
                 />
                 <Button size="sm" onClick={handleCreateNewProduct}>Agregar</Button>
-                <Button size="sm" variant="secondary" onClick={() => setShowNewProduct(false)}>Cancelar</Button>
+                <Button size="sm" variant="secondary" onClick={() => {
+                  setShowNewProduct(false);
+                  setNewProductName('');
+                }}>Cancelar</Button>
               </div>
             )}
 
