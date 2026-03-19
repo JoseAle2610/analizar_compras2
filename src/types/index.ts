@@ -45,6 +45,7 @@ export interface BuyingRound {
   date: string;
   status: RoundStatus;
   targetProductIds: string[];
+  removedTargetProductIds?: string[];
   rates: RatesConfig;
   baseCurrency: BaseCurrency;
   createdAt: string;
@@ -100,6 +101,11 @@ export interface AppActions {
   updateRates: (rates: Partial<RatesConfig>) => void;
   updateBaseCurrency: (currency: BaseCurrency) => void;
   convertPrice: (amount: number, fromCurrency: Currency, rates: RatesConfig, toCurrency: BaseCurrency) => number;
+  
+  // Round Product Management
+  addProductToRound: (roundId: string, productId: string) => void;
+  removeProductFromRound: (roundId: string, productId: string) => void;
+  restoreProductToRound: (roundId: string, productId: string) => void;
 }
 
 export type Store = AppState & AppActions;

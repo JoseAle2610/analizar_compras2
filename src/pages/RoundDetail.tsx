@@ -6,7 +6,7 @@ import type { Currency, RatesConfig, BaseCurrency } from '../types';
 
 export const RoundDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { rounds, establishments, visits, addVisit, updateVisitProduct, completeVisit, reopenVisit, deleteVisit, getBestPriceForProduct, isEstablishmentVisited, addEstablishment, getProductById, convertPrice, updateRound } = useStore();
+  const { rounds, establishments, visits, products, addVisit, updateVisitProduct, completeVisit, reopenVisit, deleteVisit, getBestPriceForProduct, isEstablishmentVisited, addEstablishment, getProductById, convertPrice, updateRound, addProductToRound, removeProductFromRound, restoreProductToRound, addProduct } = useStore();
   const [activeTab, setActiveTab] = useState('visits');
   const [showAddVisit, setShowAddVisit] = useState(false);
   const [selectedEstablishment, setSelectedEstablishment] = useState('');
@@ -15,6 +15,10 @@ export const RoundDetail: React.FC = () => {
   const [showRatesEdit, setShowRatesEdit] = useState(false);
   const [editRates, setEditRates] = useState<RatesConfig>({ bcv: 0, usdt: 0, eur: 0 });
   const [editBaseCurrency, setEditBaseCurrency] = useState<BaseCurrency>('Bs');
+  const [showProductSelect, setShowProductSelect] = useState(false);
+  const [showNewProduct, setShowNewProduct] = useState(false);
+  const [newProductName, setNewProductName] = useState('');
+  const [showRemovedProducts, setShowRemovedProducts] = useState(false);
 
   const firstPriceInputRef = useRef<HTMLInputElement>(null);
 
@@ -88,6 +92,14 @@ export const RoundDetail: React.FC = () => {
   const roundProducts = round.targetProductIds
     .map((productId) => getProductById(productId))
     .filter((p): p is NonNullable<typeof p> => p !== undefined);
+  
+  const removedProducts = (round.removedTargetProductIds || [])
+    .map((id) => getProductById(id))
+    .filter((p): p is NonNullable<typeof p> => p !== undefined);
+  
+  const availableProductsToAdd = products.filter(
+    (p) => !round.targetProductIds.includes(p.id) && !(round.removedTargetProductIds || []).includes(p.id)
+  );
 
   const handleEditPrices = (visitId: string, currentStatus: 'pending' | 'completed') => {
     if (currentStatus === 'completed') {
@@ -113,6 +125,30 @@ export const RoundDetail: React.FC = () => {
     setShowRatesEdit(false);
   };
 
+  const handleRemoveProduct = (productId: string) => {
+    removeProductFromRound(round.id, productId);
+  };
+
+  const handleRestoreProduct = (productId: string) => {
+    restoreProductToRound(round.id, productId);
+  };
+
+  const handleAddExistingProduct = (productId: string) => {
+    addProductToRound(round.id, productId);
+  };
+
+  const handleCreateNewProduct = () => {
+    if (newProductName.trim()) {
+      addProduct(newProductName.trim(), []);
+      const newProduct = products.find((p) => p.name === newProductName.trim());
+      if (newProduct) {
+        addProductToRound(round.id, newProduct.id);
+      }
+      setNewProductName('');
+      setShowNewProduct(false);
+    }
+  };
+
   return (
     <div>
       <div className="mb-6">
@@ -135,6 +171,119 @@ export const RoundDetail: React.FC = () => {
             {round.baseCurrency} · {round.rates.bcv > 0 ? `BCV: ${round.rates.bcv}` : 'Sin tasas'}
           </button>
         </div>
+
+        {!isRoundReadOnly && (
+          <div className="mt-3 p-3 bg-gray-50 rounded-lg border">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium text-gray-700">Productos Objetivo ({roundProducts.length})</h3>
+              <div className="flex gap-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setShowProductSelect(!showProductSelect)}
+                >
+                  {showProductSelect ? 'Cerrar' : 'Agregar'}
+                </Button>
+                {availableProductsToAdd.length === 0 && !showNewProduct && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowNewProduct(true)}
+                  >
+                    + Nuevo
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {showProductSelect && availableProductsToAdd.length > 0 && (
+              <div className="mb-3 p-2 bg-white rounded border max-h-40 overflow-y-auto">
+                {availableProductsToAdd.map((product) => (
+                  <button
+                    key={product.id}
+                    onClick={() => handleAddExistingProduct(product.id)}
+                    className="w-full text-left px-2 py-1.5 text-sm hover:bg-emerald-50 rounded flex items-center justify-between"
+                  >
+                    <span className="truncate">{product.name}</span>
+                    {product.tags.length > 0 && (
+                      <span className="text-xs text-gray-400 ml-2">{product.tags.join(', ')}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {showNewProduct && (
+              <div className="flex gap-2 mb-3">
+                <Input
+                  value={newProductName}
+                  onChange={(e) => setNewProductName(e.target.value)}
+                  placeholder="Nombre del producto"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleCreateNewProduct();
+                    if (e.key === 'Escape') setShowNewProduct(false);
+                  }}
+                />
+                <Button size="sm" onClick={handleCreateNewProduct}>Agregar</Button>
+                <Button size="sm" variant="secondary" onClick={() => setShowNewProduct(false)}>Cancelar</Button>
+              </div>
+            )}
+
+            {roundProducts.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {roundProducts.map((product) => (
+                  <span
+                    key={product.id}
+                    className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-sm"
+                  >
+                    {product.name}
+                    <button
+                      onClick={() => handleRemoveProduct(product.id)}
+                      className="hover:text-emerald-900 font-medium"
+                      title="Eliminar de la ronda"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-400">Sin productos agregados</p>
+            )}
+
+            {removedProducts.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-gray-200">
+                <button
+                  onClick={() => setShowRemovedProducts(!showRemovedProducts)}
+                  className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
+                >
+                  <span>{showRemovedProducts ? '▼' : '▶'}</span>
+                  Eliminados ({removedProducts.length})
+                </button>
+                {showRemovedProducts && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {removedProducts.map((product) => (
+                      <span
+                        key={product.id}
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-400 rounded text-sm line-through"
+                      >
+                        {product.name}
+                        <button
+                          onClick={() => handleRestoreProduct(product.id)}
+                          className="hover:text-emerald-600 font-medium"
+                          title="Restaurar"
+                        >
+                          ↩
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {isRoundReadOnly && (

@@ -359,6 +359,48 @@ export const useStore = create<Store>()(
         
         return amountInBs;
       },
+
+      addProductToRound: (roundId: string, productId: string) => {
+        set((state) => ({
+          rounds: state.rounds.map((r) => {
+            if (r.id !== roundId) return r;
+            if (r.targetProductIds.includes(productId)) return r;
+            return {
+              ...r,
+              targetProductIds: [...r.targetProductIds, productId],
+              removedTargetProductIds: r.removedTargetProductIds?.filter((id) => id !== productId) || [],
+            };
+          }),
+        }));
+      },
+
+      removeProductFromRound: (roundId: string, productId: string) => {
+        set((state) => ({
+          rounds: state.rounds.map((r) => {
+            if (r.id !== roundId) return r;
+            if (!r.targetProductIds.includes(productId)) return r;
+            return {
+              ...r,
+              targetProductIds: r.targetProductIds.filter((id) => id !== productId),
+              removedTargetProductIds: [...(r.removedTargetProductIds || []), productId],
+            };
+          }),
+        }));
+      },
+
+      restoreProductToRound: (roundId: string, productId: string) => {
+        set((state) => ({
+          rounds: state.rounds.map((r) => {
+            if (r.id !== roundId) return r;
+            if (!r.removedTargetProductIds?.includes(productId)) return r;
+            return {
+              ...r,
+              targetProductIds: [...r.targetProductIds, productId],
+              removedTargetProductIds: r.removedTargetProductIds.filter((id) => id !== productId),
+            };
+          }),
+        }));
+      },
     }),
     {
       name: 'kiosco-storage',
