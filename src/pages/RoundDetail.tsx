@@ -6,7 +6,7 @@ import type { Currency, RatesConfig, BaseCurrency } from '../types';
 
 export const RoundDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { rounds, establishments, visits, products, addVisit, updateVisitProduct, completeVisit, reopenVisit, deleteVisit, getBestPriceForProduct, isEstablishmentVisited, addEstablishment, getProductById, convertPrice, updateRound, addProductToRound, removeProductFromRound, restoreProductToRound, addProduct } = useStore();
+  const { rounds, establishments, visits, addVisit, updateVisitProduct, completeVisit, reopenVisit, deleteVisit, getBestPriceForProduct, isEstablishmentVisited, addEstablishment, getProductById, convertPrice, updateRound, removeProductFromRound, restoreProductToRound, addProduct, addProductToRound } = useStore();
   const [activeTab, setActiveTab] = useState('visits');
   const [showAddVisit, setShowAddVisit] = useState(false);
   const [selectedEstablishment, setSelectedEstablishment] = useState('');
@@ -15,7 +15,6 @@ export const RoundDetail: React.FC = () => {
   const [showRatesEdit, setShowRatesEdit] = useState(false);
   const [editRates, setEditRates] = useState<RatesConfig>({ bcv: 0, usdt: 0, eur: 0 });
   const [editBaseCurrency, setEditBaseCurrency] = useState<BaseCurrency>('Bs');
-  const [showProductSelect, setShowProductSelect] = useState(false);
   const [showNewProduct, setShowNewProduct] = useState(false);
   const [newProductName, setNewProductName] = useState('');
   const [showRemovedProducts, setShowRemovedProducts] = useState(false);
@@ -96,10 +95,6 @@ export const RoundDetail: React.FC = () => {
   const removedProducts = (round.removedTargetProductIds || [])
     .map((id) => getProductById(id))
     .filter((p): p is NonNullable<typeof p> => p !== undefined);
-  
-  const availableProductsToAdd = products.filter(
-    (p) => !round.targetProductIds.includes(p.id) && !(round.removedTargetProductIds || []).includes(p.id)
-  );
 
   const handleEditPrices = (visitId: string, currentStatus: 'pending' | 'completed') => {
     if (currentStatus === 'completed') {
@@ -133,10 +128,6 @@ export const RoundDetail: React.FC = () => {
     restoreProductToRound(round.id, productId);
   };
 
-  const handleAddExistingProduct = (productId: string) => {
-    addProductToRound(round.id, productId);
-  };
-
   const handleCreateNewProduct = () => {
     if (newProductName.trim()) {
       addProduct(newProductName.trim(), []);
@@ -147,7 +138,6 @@ export const RoundDetail: React.FC = () => {
       }
       setNewProductName('');
       setShowNewProduct(false);
-      setShowProductSelect(false);
     }
   };
 
@@ -178,55 +168,16 @@ export const RoundDetail: React.FC = () => {
           <div className="mt-3 p-3 bg-gray-50 rounded-lg border">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-medium text-gray-700">Productos Objetivo ({roundProducts.length})</h3>
-              <div className="flex gap-2">
+              {!showNewProduct && (
                 <Button
-                  variant="secondary"
+                  variant="ghost"
                   size="sm"
-                  onClick={() => {
-                    if (showProductSelect) {
-                      setShowProductSelect(false);
-                    } else if (showNewProduct) {
-                      setShowNewProduct(false);
-                    } else if (availableProductsToAdd.length > 0) {
-                      setShowProductSelect(true);
-                    } else {
-                      setShowNewProduct(true);
-                    }
-                  }}
+                  onClick={() => setShowNewProduct(true)}
                 >
-                  {showProductSelect || showNewProduct ? 'Cerrar' : 'Agregar'}
+                  + Nuevo
                 </Button>
-                {!showNewProduct && availableProductsToAdd.length === 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowNewProduct(true)}
-                  >
-                    + Nuevo
-                  </Button>
-                )}
-              </div>
+              )}
             </div>
-
-            {showProductSelect && availableProductsToAdd.length > 0 && (
-              <div className="mb-3 p-2 bg-white rounded border max-h-40 overflow-y-auto">
-                {availableProductsToAdd.map((product) => (
-                  <button
-                    key={product.id}
-                    onClick={() => {
-                      handleAddExistingProduct(product.id);
-                      setShowProductSelect(false);
-                    }}
-                    className="w-full text-left px-2 py-1.5 text-sm hover:bg-emerald-50 rounded flex items-center justify-between"
-                  >
-                    <span className="truncate">{product.name}</span>
-                    {product.tags.length > 0 && (
-                      <span className="text-xs text-gray-400 ml-2">{product.tags.join(', ')}</span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
 
             {showNewProduct && (
               <div className="flex gap-2 mb-3">
