@@ -1,0 +1,42 @@
+# Dependencies
+node_modules
+pnpm-lock.yaml
+npm-debug.log*
+
+# Build output (se reconstruye en el container)
+dist
+
+# Git
+.git
+.gitignore
+
+# Development files
+*.md
+.env
+.env.*
+.env.local
+eslint.config.js
+vitest.config.ts
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Test files
+__tests__
+coverage
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
