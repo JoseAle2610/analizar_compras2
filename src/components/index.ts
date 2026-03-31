@@ -8,3 +8,5 @@ export { Combobox } from './Combobox';
 export { Layout } from './Layout';
 export { Tabs } from './Tabs';
 export { SwipeableCard } from './SwipeableCard';
+export { ReloadPrompt } from './ReloadPrompt';
+export { InstallButton, InstallPromptToast } from './InstallPrompt';

@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'icons.svg'],
+      injectRegister: 'auto',
       manifest: {
         name: 'Kiosco Inteligente',
         short_name: 'Kiosco',
@@ -24,22 +24,32 @@ export default defineConfig({
             src: '/pwa-192x192.png',
             sizes: '192x192',
             type: 'image/png',
+            purpose: 'any',
           },
           {
             src: '/pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
+            purpose: 'any',
           },
           {
             src: '/pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable',
+            purpose: 'maskable',
           },
         ],
+        categories: ['shopping', 'utilities'],
+        lang: 'es',
+        dir: 'ltr',
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        globPatterns: ['**/*.{js,css,html,ico,svg,woff,woff2,ttf,eot}'],
+        globIgnores: ['**/pwa-*.png', '**/node_modules/**/*'],
+        // SPA fallback: todas las navegaciones van a index.html
+        navigateFallback: '/index.html',
+        // Denylist: excluir rutas de API y service-worker del fallback
+        navigateFallbackDenylist: [/^\/api\//, /^\/sw\.js$/, /^\/workbox-.*\.js$/],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -69,7 +79,30 @@ export default defineConfig({
               },
             },
           },
+          // Cache para imágenes externas si las hubiera
+          {
+            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'images-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
         ],
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
+      },
+      devOptions: {
+        enabled: false, // activar solo para debug local
+        type: 'module',
+        navigateFallback: 'index.html',
       },
     }),
   ],

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { InstallButton } from './InstallPrompt';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
@@ -33,7 +34,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               </svg>
             </button>
             <h1 className="text-xl font-bold text-emerald-700">Comparador de Precios</h1>
-            <div className="w-10" />
+            <InstallButton />
           </div>
         </div>
       </header>

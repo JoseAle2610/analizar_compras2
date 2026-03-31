@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Layout } from './components';
+import { Layout, ReloadPrompt, InstallPromptToast } from './components';
 import { Dashboard, RoundDetail, ProductsPage, EstablishmentsPage, SettingsPage } from './pages';
 
 function App() {
@@ -14,6 +14,8 @@ function App() {
           <Route path="/settings" element={<SettingsPage />} />
         </Routes>
       </Layout>
+      <ReloadPrompt />
+      <InstallPromptToast />
     </BrowserRouter>
   );
 }
